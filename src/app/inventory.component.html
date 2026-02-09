@@ -1,0 +1,168 @@
+<section class="hero">
+  <div class="hero-content">
+    <p class="eyebrow">Berecons Trading</p>
+    <h1>American & European Home Goods, Fast.</h1>
+    <p class="lead">
+      Browse live inventory, send your wish list, and book a viewing in minutes.
+      Everything stays simple and confirmed on WhatsApp.
+    </p>
+    <div class="hero-actions">
+      <a class="btn primary" routerLink="/wishlist">Send Wish List</a>
+      <a class="btn ghost" routerLink="/booking">Book Viewing</a>
+    </div>
+    <div class="trust-row">
+      <div>
+        <p class="trust-title">Weekly Containers</p>
+        <p class="trust-sub">Fresh stock, fast turnover</p>
+      </div>
+      <div>
+        <p class="trust-title">In-Person Testing</p>
+        <p class="trust-sub">Inspect before you buy</p>
+      </div>
+      <div>
+        <p class="trust-title">Direct Sourcing</p>
+        <p class="trust-sub">US + EU options</p>
+      </div>
+    </div>
+  </div>
+  <div class="hero-card">
+    <p class="card-title">Quick Steps</p>
+    <ol class="card-list">
+      <li>Pick products from the inventory list.</li>
+      <li>Send your wish list if you need a specific item.</li>
+      <li>Book a viewing and test in person.</li>
+    </ol>
+    <div class="card-footer">We confirm everything by phone.</div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">LIVE STOCK</p>
+      <h2>Inventory Ready to View</h2>
+    </div>
+    <button class="btn ghost" type="button" (click)="loadProducts()">Refresh</button>
+  </div>
+
+  <div class="filter-bar">
+    <label>
+      Search
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Search name, brand, category" />
+    </label>
+    <label>
+      Status
+      <select [(ngModel)]="statusFilter">
+        <option value="ALL">All</option>
+        <option value="AVAILABLE">Available</option>
+        <option value="RESERVED">Reserved</option>
+        <option value="SOLD">Sold</option>
+      </select>
+    </label>
+    <label>
+      Category
+      <select [(ngModel)]="categoryFilter">
+        <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+      </select>
+    </label>
+    <button class="btn ghost" type="button" (click)="clearFilters()">Clear</button>
+  </div>
+
+  <div class="status" *ngIf="productsLoading">Loading products...</div>
+  <div class="status error" *ngIf="productsError">{{ productsError }}</div>
+
+  <div class="grid compact" *ngIf="!productsLoading && filteredProducts.length">
+    <article
+      class="product micro"
+      *ngFor="let product of filteredProducts"
+      [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
+    >
+      <div class="product-media" *ngIf="product.imageUrls?.length; else placeholder">
+        <img class="thumb" loading="lazy" [src]="thumbUrl(product.imageUrls?.[0])" [alt]="product.name" />
+        <button type="button" class="view-btn" (click)="openPreview(product.imageUrls?.[0])">👁</button>
+      </div>
+      <ng-template #placeholder>
+        <div class="product-media placeholder">
+          <span>No Image</span>
+        </div>
+      </ng-template>
+      <div class="card-actions">
+        <a
+          class="icon-btn"
+          [class.disabled]="!whatsappConfigured"
+          [attr.aria-disabled]="!whatsappConfigured"
+          [href]="getWhatsAppLink(product)"
+          target="_blank"
+          rel="noopener"
+          title="Chat on WhatsApp"
+          aria-label="Chat on WhatsApp"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M20.5 11.7c0 4.8-4.2 8.7-9.3 8.7-1.6 0-3.1-.4-4.5-1.1L3.5 20.5l1.2-3.1a8.2 8.2 0 0 1-1.5-4.7C3.2 7.9 7.4 4 12.5 4c5.1 0 8 3 8 7.7z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M9.3 9.2c.2-.4.4-.4.6-.4h.7c.2 0 .4.1.5.4l.6 1.4c.1.2.1.4 0 .5l-.4.6c-.1.2-.1.3 0 .5.3.6 1.2 1.7 2.6 2.3.2.1.4 0 .5-.1l.7-.8c.1-.1.3-.2.5-.1l1.6.7c.3.1.4.4.4.6 0 .6-.3 1.3-.9 1.7-.6.4-1.3.5-2 .4-2.1-.4-4.1-2.3-5.4-4.1-1.2-1.7-1.7-3.2-1.7-4.2 0-.8.3-1.5.7-2z"
+              fill="currentColor"
+            />
+          </svg>
+        </a>
+        <a
+          class="icon-btn"
+          routerLink="/booking"
+          [queryParams]="{ productId: product.id, productName: product.name }"
+          title="Book viewing"
+          aria-label="Book viewing"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M7 3v3M17 3v3"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <path
+              d="M4 7h16"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <path
+              d="M6 5h12a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M8 11h4M8 15h6"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </a>
+      </div>
+      <div class="product-top">
+        <p class="product-status">{{ product.status || 'AVAILABLE' }}</p>
+        <p class="product-price" *ngIf="product.price">
+          {{ product.currency || 'GHS' }} {{ product.price | number:'1.0-0' }}
+        </p>
+      </div>
+      <h4 class="name-line">{{ product.name }}</h4>
+    </article>
+  </div>
+
+  <div class="status" *ngIf="!productsLoading && !filteredProducts.length">
+    No products match your filters.
+  </div>
+
+  <div class="lightbox" *ngIf="previewUrl" (click)="closePreview()">
+    <div class="lightbox-body" (click)="$event.stopPropagation()">
+      <img [src]="previewUrl" alt="Preview image" />
+      <button type="button" class="btn ghost" (click)="closePreview()">Close</button>
+    </div>
+  </div>
+</section>

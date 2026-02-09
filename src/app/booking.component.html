@@ -1,0 +1,72 @@
+<section class="section split">
+  <div class="panel">
+    <p class="eyebrow">BOOKING</p>
+    <h2>Book a Viewing</h2>
+    <p class="lead">Reserve a time to test items in person. We confirm by phone.</p>
+    <div class="hero-actions">
+      <a class="btn ghost" routerLink="/wishlist">Send Wish List</a>
+      <a class="btn ghost" routerLink="/">View Inventory</a>
+    </div>
+  </div>
+  <form class="panel form" (ngSubmit)="submitBooking()" #bookingForm="ngForm">
+    <label>
+      Full name
+      <input type="text" name="bookingName" [(ngModel)]="booking.customerName" required />
+    </label>
+    <label>
+      Phone number
+      <input
+        type="text"
+        name="bookingPhone"
+        [(ngModel)]="booking.customerPhone"
+        (ngModelChange)="syncWhatsappFromPhone()"
+        required
+      />
+    </label>
+    <label class="checkbox">
+      <input
+        type="checkbox"
+        name="bookingWhatsappSame"
+        [(ngModel)]="usePhoneForWhatsapp"
+        (change)="syncWhatsappFromPhone()"
+      />
+      WhatsApp number is the same as phone
+    </label>
+    <label>
+      WhatsApp number (include country code if not Ghana)
+      <input
+        type="text"
+        name="bookingWhatsapp"
+        [(ngModel)]="booking.whatsappNumber"
+        [disabled]="usePhoneForWhatsapp"
+        placeholder="+233..."
+      />
+    </label>
+    <label>
+      Product ID (optional)
+      <input type="number" name="productId" [(ngModel)]="booking.productId" />
+    </label>
+    <label>
+      Product name (optional)
+      <input type="text" name="productName" [(ngModel)]="booking.productName" />
+    </label>
+    <div class="form-row">
+      <label>
+        Preferred date
+        <input type="date" name="preferredDate" [(ngModel)]="booking.preferredDate" required />
+      </label>
+      <label>
+        Preferred time
+        <input type="time" name="preferredTime" [(ngModel)]="booking.preferredTime" required />
+      </label>
+    </div>
+    <label>
+      Notes (optional)
+      <textarea name="bookingNotes" rows="3" [(ngModel)]="booking.notes"></textarea>
+    </label>
+    <button class="btn primary" type="submit" [disabled]="bookingSubmitting || bookingForm.invalid">
+      {{ bookingSubmitting ? 'Sending...' : 'Request Viewing' }}
+    </button>
+    <p class="status" *ngIf="bookingMessage">{{ bookingMessage }}</p>
+  </form>
+</section>

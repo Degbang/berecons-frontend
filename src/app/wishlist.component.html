@@ -1,0 +1,58 @@
+<section class="section split">
+  <div class="panel">
+    <p class="eyebrow">REQUEST</p>
+    <h2>Send Your Wish List</h2>
+    <p class="lead">Tell us what you want. We will share photos after offload and set a viewing time.</p>
+    <div class="hero-actions">
+      <a class="btn ghost" routerLink="/booking">Book Viewing</a>
+      <a class="btn ghost" routerLink="/">View Inventory</a>
+    </div>
+  </div>
+  <form class="panel form" (ngSubmit)="submitWishlist()" #wishlistForm="ngForm">
+    <label>
+      Full name
+      <input type="text" name="customerName" [(ngModel)]="wishlist.customerName" required />
+    </label>
+    <label>
+      Phone number
+      <input
+        type="text"
+        name="customerPhone"
+        [(ngModel)]="wishlist.customerPhone"
+        (ngModelChange)="syncWhatsappFromPhone()"
+        required
+      />
+    </label>
+    <label class="checkbox">
+      <input
+        type="checkbox"
+        name="wishlistWhatsappSame"
+        [(ngModel)]="usePhoneForWhatsapp"
+        (change)="syncWhatsappFromPhone()"
+      />
+      WhatsApp number is the same as phone
+    </label>
+    <label>
+      WhatsApp number (include country code if not Ghana)
+      <input
+        type="text"
+        name="wishlistWhatsapp"
+        [(ngModel)]="wishlist.whatsappNumber"
+        [disabled]="usePhoneForWhatsapp"
+        placeholder="+233..."
+      />
+    </label>
+    <label>
+      Desired items
+      <textarea name="desiredItems" rows="4" [(ngModel)]="wishlist.desiredItems" required></textarea>
+    </label>
+    <label>
+      Notes (optional)
+      <textarea name="notes" rows="3" [(ngModel)]="wishlist.notes"></textarea>
+    </label>
+    <button class="btn primary" type="submit" [disabled]="wishlistSubmitting || wishlistForm.invalid">
+      {{ wishlistSubmitting ? 'Sending...' : 'Send Wish List' }}
+    </button>
+    <p class="status" *ngIf="wishlistMessage">{{ wishlistMessage }}</p>
+  </form>
+</section>

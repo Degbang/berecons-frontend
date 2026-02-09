@@ -1,0 +1,350 @@
+<section class="section auth-shell" *ngIf="!auth.isLoggedIn()">
+  <div class="panel">
+    <p class="eyebrow">ADMIN LOGIN</p>
+    <h2>Enter Admin Credentials</h2>
+    <label>
+      Username
+      <input type="text" [(ngModel)]="loginUsername" />
+    </label>
+    <label>
+      Password
+      <input type="password" [(ngModel)]="loginPassword" />
+    </label>
+    <div class="form-actions">
+      <button class="btn primary" type="button" (click)="login()">Login</button>
+    </div>
+    <p class="status" *ngIf="loginMessage">{{ loginMessage }}</p>
+  </div>
+
+  <div class="panel">
+    <p class="eyebrow">RESET ADMIN</p>
+    <h2>Forgot password?</h2>
+    <div class="form-actions">
+      <button class="btn ghost" type="button" (click)="forgotPanelOpen = !forgotPanelOpen">
+        {{ forgotPanelOpen ? 'Hide reset form' : 'Show reset form' }}
+      </button>
+    </div>
+    <div class="reset-block" *ngIf="forgotPanelOpen">
+      <label>
+        Reset key
+        <input type="password" [(ngModel)]="resetKey" />
+      </label>
+      <label>
+        New username
+        <input type="text" [(ngModel)]="resetUsername" />
+      </label>
+      <label>
+        New password
+        <input type="password" [(ngModel)]="resetPassword" />
+      </label>
+      <div class="form-actions">
+        <button class="btn ghost" type="button" (click)="resetCredentials()">Reset</button>
+      </div>
+      <p class="status" *ngIf="resetMessage">{{ resetMessage }}</p>
+    </div>
+  </div>
+</section>
+
+ <section *ngIf="auth.isLoggedIn()" class="admin-shell">
+  <section class="info-banner" *ngIf="adminView==='products'">
+    <div>
+      <p class="eyebrow">Product Manager</p>
+      <p class="lead">
+        Add new items, update pricing, and change statuses. Upload images to show real photos.
+        Statuses: Available, Reserved, Sold.
+      </p>
+    </div>
+  </section>
+
+  <section class="section split" *ngIf="adminView==='products'">
+    <div class="spacer"></div>
+    <div class="form-wrapper">
+      <form class="panel form" (ngSubmit)="saveProduct()" #productFormRef="ngForm">
+        <label>
+          Product name
+          <input type="text" name="name" [(ngModel)]="productForm.name" required />
+        </label>
+      <label>
+        Brand
+        <input type="text" name="brand" [(ngModel)]="productForm.brand" />
+      </label>
+      <label>
+        Category
+        <input type="text" name="category" [(ngModel)]="productForm.category" />
+      </label>
+      <label>
+        Condition note
+        <input type="text" name="conditionNote" [(ngModel)]="productForm.conditionNote" />
+      </label>
+      <div class="form-row">
+        <label>
+          Price
+          <input type="number" name="price" [(ngModel)]="productForm.price" />
+        </label>
+      </div>
+      <label>
+        Status
+        <select name="status" [(ngModel)]="productForm.status">
+          <option *ngFor="let status of productStatuses" [value]="status">{{ status }}</option>
+        </select>
+      </label>
+      <label>
+        Description
+        <textarea name="description" rows="4" [(ngModel)]="productForm.description"></textarea>
+      </label>
+
+      <div class="upload-block">
+        <label class="file-input">
+          Upload image
+          <input type="file" accept="image/*" (change)="uploadImage($event)" />
+        </label>
+        <p class="status" *ngIf="imageUploading">Uploading image...</p>
+        <p class="status" *ngIf="imageUploadMessage">{{ imageUploadMessage }}</p>
+        <div class="image-grid" *ngIf="productForm.imageUrls?.length">
+          <div class="image-thumb" *ngFor="let url of productForm.imageUrls; let i = index">
+            <img [src]="url" alt="Product" />
+            <button class="chip" type="button" (click)="removeImage(i)">Remove</button>
+          </div>
+        </div>
+      </div>
+
+        <div class="form-actions">
+          <button class="btn primary" type="submit" [disabled]="adminSubmitting || productFormRef.invalid">
+            {{ adminSubmitting ? 'Saving...' : (editingProductId ? 'Update Product' : 'Create Product') }}
+          </button>
+          <button class="btn ghost" type="button" (click)="resetProductForm()">Clear</button>
+        </div>
+        <p class="status" *ngIf="adminMessage">{{ adminMessage }}</p>
+      </form>
+    </div>
+  </section>
+
+  <section class="section" *ngIf="adminView==='products'">
+    <div class="section-header">
+      <div>
+        <h2>Current Products</h2>
+      </div>
+    </div>
+
+    <div class="status" *ngIf="productsLoading">Loading products...</div>
+    <div class="status error" *ngIf="productsError">{{ productsError }}</div>
+    <div class="status" *ngIf="productsMessage">{{ productsMessage }}</div>
+
+    <div class="grid compact" *ngIf="!productsLoading && products.length">
+      <article
+        class="product compact micro"
+        *ngFor="let product of products"
+        [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
+      >
+        <div class="product-media" *ngIf="product.imageUrls?.length; else placeholder">
+          <img class="thumb tiny" loading="lazy" [src]="thumbUrl(product.imageUrls?.[0])" [alt]="product.name" />
+          <button type="button" class="view-btn" (click)="openPreview(product.imageUrls?.[0])">👁</button>
+        </div>
+        <ng-template #placeholder>
+          <div class="product-media placeholder">
+            <span>No Image</span>
+          </div>
+        </ng-template>
+        <div class="card-actions">
+          <button
+            class="icon-btn"
+            type="button"
+            [disabled]="isDeleting(product.id)"
+            aria-label="Edit product"
+            title="Edit"
+            (click)="startEdit(product)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M12 20h9"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <path
+                d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            class="icon-btn danger"
+            type="button"
+            [disabled]="isDeleting(product.id)"
+            aria-label="Delete product"
+            title="Delete"
+            (click)="deleteProduct(product)"
+          >
+            <span class="spinner" *ngIf="isDeleting(product.id); else trashIcon" aria-hidden="true"></span>
+            <ng-template #trashIcon>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M3 6h18"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M6 6l1 16a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-16"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M10 11v6M14 11v6"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </ng-template>
+          </button>
+        </div>
+        <div class="product-top">
+          <p class="product-status">{{ product.status || 'AVAILABLE' }}</p>
+          <p class="product-price" *ngIf="product.price">
+            {{ product.currency || 'GHS' }} {{ product.price | number:'1.0-0' }}
+          </p>
+        </div>
+        <h4 class="name-line">{{ product.name }}</h4>
+      </article>
+    </div>
+
+    <div class="status" *ngIf="!productsLoading && !products.length">
+      No products yet. Add one above.
+    </div>
+  </section>
+  <!-- Viewing requests -->
+  <section class="section panel" *ngIf="adminView==='bookings'">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">BOOKINGS</p>
+        <h2>Viewing Requests</h2>
+        <p class="lead">Approve or reject with a reason. PENDING until you decide.</p>
+      </div>
+    </div>
+
+    <div class="status" *ngIf="bookingsLoading">Loading bookings...</div>
+    <div class="status error" *ngIf="bookingsError">{{ bookingsError }}</div>
+
+    <div class="grid" *ngIf="bookings.length; else noBookings">
+      <article class="product" *ngFor="let booking of bookings">
+        <div class="product-top">
+          <p class="product-status">{{ booking.status }}</p>
+          <p class="product-meta">{{ booking.preferredDate }} {{ booking.preferredTime }}</p>
+        </div>
+        <h3>{{ booking.customerName }}</h3>
+        <p class="product-meta">{{ booking.customerPhone }}</p>
+        <p class="product-meta" *ngIf="booking.whatsappNumber">WhatsApp: {{ booking.whatsappNumber }}</p>
+        <p class="product-meta" *ngIf="booking.productName">Item: {{ booking.productName }}</p>
+        <p class="product-meta" *ngIf="booking.productId">Product ID: {{ booking.productId }}</p>
+        <p class="product-desc" *ngIf="booking.notes">Notes: {{ booking.notes }}</p>
+        <p class="product-desc" *ngIf="booking.statusReason">Reason: {{ booking.statusReason }}</p>
+        <div class="product-actions compact-actions">
+          <a
+            class="chip"
+            [class.disabled]="!getBookingWhatsappLink(booking)"
+            [href]="getBookingWhatsappLink(booking)"
+            target="_blank"
+            rel="noopener"
+            >WhatsApp</a
+          >
+          <a
+            class="chip secondary"
+            [class.disabled]="!getCallLink(booking.whatsappNumber || booking.customerPhone)"
+            [href]="getCallLink(booking.whatsappNumber || booking.customerPhone)"
+            >Call</a
+          >
+        </div>
+        <div class="form-row">
+          <label>
+            Update status
+            <select #statusSel (change)="updateBooking(booking, statusSel.value)">
+              <option [selected]="booking.status==='PENDING'" value="PENDING">PENDING</option>
+              <option [selected]="booking.status==='APPROVED'" value="APPROVED">APPROVED</option>
+              <option [selected]="booking.status==='DECLINED'" value="DECLINED">DECLINED</option>
+            </select>
+          </label>
+        </div>
+      </article>
+    </div>
+    <ng-template #noBookings>
+      <p class="status" *ngIf="!bookingsLoading">No bookings yet.</p>
+    </ng-template>
+  </section>
+
+  <!-- Wishlists -->
+  <section class="section panel" *ngIf="adminView==='wishlists'">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">WISHLISTS</p>
+        <h2>Customer Wishlists</h2>
+        <p class="lead">See requests by phone/WhatsApp, mark if contacted or closed.</p>
+      </div>
+    </div>
+
+    <div class="status" *ngIf="wishlistsLoading">Loading wishlists...</div>
+    <div class="status error" *ngIf="wishlistsError">{{ wishlistsError }}</div>
+
+    <div class="grid" *ngIf="wishlists.length; else noWl">
+      <article class="product" *ngFor="let wl of wishlists" [title]="wl.desiredItems">
+        <div class="product-top">
+          <p class="product-status">{{ wl.status }}</p>
+          <p class="product-meta">{{ wl.createdAt | date:'short' }}</p>
+        </div>
+        <h3>{{ wl.customerName }}</h3>
+        <p class="product-meta">{{ wl.customerPhone }}</p>
+        <p class="product-meta" *ngIf="wl.whatsappNumber">WhatsApp: {{ wl.whatsappNumber }}</p>
+        <p class="product-desc">{{ wl.desiredItems }}</p>
+        <p class="product-meta" *ngIf="wl.notes">Notes: {{ wl.notes }}</p>
+        <div class="product-actions compact-actions">
+          <a
+            class="chip"
+            [class.disabled]="!getWishlistWhatsappLink(wl)"
+            [href]="getWishlistWhatsappLink(wl)"
+            target="_blank"
+            rel="noopener"
+            >WhatsApp</a
+          >
+          <a
+            class="chip secondary"
+            [class.disabled]="!getCallLink(wl.whatsappNumber || wl.customerPhone)"
+            [href]="getCallLink(wl.whatsappNumber || wl.customerPhone)"
+            >Call</a
+          >
+        </div>
+        <div class="form-row">
+          <label>
+            Update status
+            <select #wlSel (change)="updateWishlist(wl, wlSel.value)">
+              <option [selected]="wl.status==='NEW'" value="NEW">NEW</option>
+              <option [selected]="wl.status==='CONTACTED'" value="CONTACTED">CONTACTED</option>
+              <option [selected]="wl.status==='CLOSED'" value="CLOSED">CLOSED</option>
+            </select>
+          </label>
+        </div>
+      </article>
+    </div>
+    <ng-template #noWl>
+      <p class="status" *ngIf="!wishlistsLoading">No wishlists yet.</p>
+    </ng-template>
+  </section>
+</section>
+
+<div class="lightbox" *ngIf="previewUrl" (click)="closePreview()">
+  <div class="lightbox-body" (click)="$event.stopPropagation()">
+    <img [src]="previewUrl" alt="Preview image" />
+    <button type="button" class="btn ghost" (click)="closePreview()">Close</button>
+  </div>
+</div>
