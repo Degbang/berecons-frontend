@@ -103,21 +103,24 @@
         <input type="text" name="category" [(ngModel)]="productForm.category" />
       </label>
       <label>
-        Condition note
-        <input type="text" name="conditionNote" [(ngModel)]="productForm.conditionNote" />
+        Condition
+        <select name="conditionNote" [(ngModel)]="productForm.conditionNote">
+          <option value="New">New</option>
+          <option value="Used">Used</option>
+        </select>
       </label>
       <div class="form-row">
         <label>
           Price
           <input type="number" name="price" [(ngModel)]="productForm.price" />
         </label>
+        <label>
+          Status
+          <select name="status" [(ngModel)]="productForm.status">
+            <option *ngFor="let status of productStatuses" [value]="status">{{ status }}</option>
+          </select>
+        </label>
       </div>
-      <label>
-        Status
-        <select name="status" [(ngModel)]="productForm.status">
-          <option *ngFor="let status of productStatuses" [value]="status">{{ status }}</option>
-        </select>
-      </label>
       <label>
         Description
         <textarea name="description" rows="4" [(ngModel)]="productForm.description"></textarea>
