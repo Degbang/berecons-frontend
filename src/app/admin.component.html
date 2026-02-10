@@ -8,7 +8,17 @@
     </label>
     <label>
       Password
-      <input type="password" [(ngModel)]="loginPassword" />
+      <div class="password-field">
+        <input [type]="showLoginPassword ? 'text' : 'password'" [(ngModel)]="loginPassword" />
+        <button
+          class="toggle-password"
+          type="button"
+          (click)="showLoginPassword = !showLoginPassword"
+          [attr.aria-label]="showLoginPassword ? 'Hide password' : 'Show password'"
+        >
+          {{ showLoginPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
     </label>
     <div class="form-actions">
       <button class="btn primary" type="button" (click)="login()">Login</button>
@@ -27,7 +37,17 @@
     <div class="reset-block" *ngIf="forgotPanelOpen">
       <label>
         Reset key
-        <input type="password" [(ngModel)]="resetKey" />
+        <div class="password-field">
+          <input [type]="showResetKey ? 'text' : 'password'" [(ngModel)]="resetKey" />
+          <button
+            class="toggle-password"
+            type="button"
+            (click)="showResetKey = !showResetKey"
+            [attr.aria-label]="showResetKey ? 'Hide reset key' : 'Show reset key'"
+          >
+            {{ showResetKey ? 'Hide' : 'Show' }}
+          </button>
+        </div>
       </label>
       <label>
         New username
@@ -35,7 +55,17 @@
       </label>
       <label>
         New password
-        <input type="password" [(ngModel)]="resetPassword" />
+        <div class="password-field">
+          <input [type]="showResetPassword ? 'text' : 'password'" [(ngModel)]="resetPassword" />
+          <button
+            class="toggle-password"
+            type="button"
+            (click)="showResetPassword = !showResetPassword"
+            [attr.aria-label]="showResetPassword ? 'Hide password' : 'Show password'"
+          >
+            {{ showResetPassword ? 'Hide' : 'Show' }}
+          </button>
+        </div>
       </label>
       <div class="form-actions">
         <button class="btn ghost" type="button" (click)="resetCredentials()">Reset</button>

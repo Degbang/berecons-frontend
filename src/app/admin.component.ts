@@ -49,11 +49,14 @@ export class AdminComponent implements OnInit, OnDestroy {
   adminView: 'products' | 'bookings' | 'wishlists' = 'products';
   loginUsername = '';
   loginPassword = '';
+  showLoginPassword = false;
   loginMessage = '';
 
   resetKey = '';
   resetUsername = '';
   resetPassword = '';
+  showResetKey = false;
+  showResetPassword = false;
   resetMessage = '';
   forgotPanelOpen = false;
 
