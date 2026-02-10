@@ -218,14 +218,17 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (!phone) return '';
     const name = booking?.customerName || 'there';
     const item = booking?.productName || 'your item';
+    const date = booking?.preferredDate ? String(booking.preferredDate) : '';
+    const time = booking?.preferredTime ? String(booking.preferredTime) : '';
+    const when = [date, time].filter(Boolean).join(' ');
     const status = (booking?.status || 'PENDING').toUpperCase();
     const reason = booking?.statusReason ? ` Reason: ${booking.statusReason}` : '';
 
-    let message = `Hi ${name}, we received your viewing request for ${item}. We'll confirm shortly.`;
+    let message = `Hi ${name}, we received your viewing request for ${item}${when ? ` on ${when}` : ''}. Status: ${status}.`;
     if (status === 'APPROVED') {
-      message = `Hi ${name}, your viewing request for ${item} is approved. Please confirm your available time.`;
+      message = `Hi ${name}, your viewing request for ${item}${when ? ` on ${when}` : ''} is approved. Please confirm if this time works.`;
     } else if (status === 'DECLINED') {
-      message = `Hi ${name}, your viewing request for ${item} was declined.${reason}`;
+      message = `Hi ${name}, your viewing request for ${item}${when ? ` on ${when}` : ''} was declined.${reason}`;
     }
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   }
@@ -236,11 +239,14 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (!phone) return '';
     const name = wl?.customerName || 'there';
     const status = (wl?.status || 'NEW').toUpperCase();
-    let message = `Hi ${name}, thanks for your wish list. We will check availability and get back to you.`;
+    const items = (wl?.desiredItems || '').trim();
+    const itemLine = items ? `Items: ${items}. ` : '';
+    const noteLine = wl?.notes ? `Notes: ${wl.notes}. ` : '';
+    let message = `Hi ${name}, thanks for your wish list. ${itemLine}${noteLine}We will check availability and get back to you.`;
     if (status === 'CONTACTED') {
-      message = `Hi ${name}, we are reviewing your wish list and will share updates shortly.`;
+      message = `Hi ${name}, we are reviewing your wish list. ${itemLine}${noteLine}We will share updates shortly.`;
     } else if (status === 'CLOSED') {
-      message = `Hi ${name}, we have completed your wish list request. Let us know if you need more items.`;
+      message = `Hi ${name}, we have completed your wish list request. ${itemLine}${noteLine}Let us know if you need more items.`;
     }
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   }
