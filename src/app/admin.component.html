@@ -167,7 +167,7 @@
       <article
         class="product compact micro"
         *ngFor="let product of products"
-        [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
+        [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.conditionNote || 'New') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
       >
         <div class="product-media" *ngIf="product.imageUrls?.length; else placeholder">
           <img class="thumb tiny" loading="lazy" [src]="thumbUrl(product.imageUrls?.[0])" [alt]="product.name" />
@@ -243,16 +243,17 @@
               </svg>
             </ng-template>
           </button>
-        </div>
-        <div class="product-top">
-          <p class="product-status">{{ product.status || 'AVAILABLE' }}</p>
-          <p class="product-price" *ngIf="product.price">
-            {{ product.currency || 'GHS' }} {{ product.price | number:'1.0-0' }}
-          </p>
-        </div>
-        <h4 class="name-line">{{ product.name }}</h4>
-      </article>
-    </div>
+      </div>
+      <div class="product-top">
+        <p class="product-status">{{ product.status || 'AVAILABLE' }}</p>
+        <p class="product-price" *ngIf="product.price">
+          {{ product.currency || 'GHS' }} {{ product.price | number:'1.0-0' }}
+        </p>
+      </div>
+      <h4 class="name-line">{{ product.name }}</h4>
+      <p class="product-condition">{{ (product.conditionNote || 'New') | titlecase }}</p>
+    </article>
+  </div>
 
     <div class="status" *ngIf="!productsLoading && !products.length">
       No products yet. Add one above.

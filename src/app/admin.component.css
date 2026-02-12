@@ -247,6 +247,14 @@
   font-weight: 700;
 }
 
+.product-condition {
+  margin: 0;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b645d;
+}
+
 .product-media .view-btn {
   position: absolute;
   right: 8px;

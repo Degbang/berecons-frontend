@@ -75,7 +75,7 @@
     <article
       class="product micro"
       *ngFor="let product of filteredProducts"
-      [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
+      [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.conditionNote || 'New') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
     >
       <div class="product-media" *ngIf="product.imageUrls?.length; else placeholder">
         <img class="thumb" loading="lazy" [src]="thumbUrl(product.imageUrls?.[0])" [alt]="product.name" />
@@ -152,6 +152,7 @@
         </p>
       </div>
       <h4 class="name-line">{{ product.name }}</h4>
+      <p class="product-condition">{{ (product.conditionNote || 'New') | titlecase }}</p>
     </article>
   </div>
 
