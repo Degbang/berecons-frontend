@@ -1,5 +1,5 @@
 export const appSettings = {
-  apiBase: 'https://berecons-backend.onrender.com/api',
+  apiBase: 'https://bereconstrading.duckdns.org/api',
   cloudinaryCloudName: 'dnsu7es0c',
   cloudinaryUploadPreset: 'berecons',
   whatsappNumber: '233543210826'
