@@ -75,7 +75,7 @@
       class="product micro"
       *ngFor="let product of filteredProducts"
       [class.reserved]="isReserved(product)"
-      [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.conditionNote || 'New') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
+      [title]="getProductTitle(product)"
     >
       <div class="reserved-badge" *ngIf="isReserved(product)">Reserved</div>
       <div class="product-media" *ngIf="product.imageUrls?.length; else placeholder">
@@ -157,7 +157,7 @@
         </p>
       </div>
       <h4 class="name-line">{{ product.name }}</h4>
-      <p class="product-condition">{{ (product.conditionNote || 'New') | titlecase }}</p>
+      <p class="product-condition">{{ formatCondition(product.conditionNote) }}</p>
     </article>
   </div>
 

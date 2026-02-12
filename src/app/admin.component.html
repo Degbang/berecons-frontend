@@ -96,19 +96,36 @@
         </label>
       <label>
         Brand
-        <input type="text" name="brand" [(ngModel)]="productForm.brand" />
+        <select name="brand" [(ngModel)]="productForm.brand">
+          <option value="">Select brand</option>
+          <option *ngFor="let brand of brandOptions" [value]="brand">{{ brand }}</option>
+        </select>
       </label>
       <label>
         Category
-        <input type="text" name="category" [(ngModel)]="productForm.category" />
+        <select name="category" [(ngModel)]="productForm.category" (ngModelChange)="onCategoryChange()">
+          <option value="">Select category</option>
+          <option *ngFor="let category of categoryOptions" [value]="category">{{ category }}</option>
+        </select>
       </label>
       <label>
         Condition
         <select name="conditionNote" [(ngModel)]="productForm.conditionNote">
-          <option value="New">New</option>
-          <option value="Used">Used</option>
+          <option *ngFor="let condition of conditionOptions" [value]="condition">
+            {{ formatCondition(condition) }}
+          </option>
         </select>
       </label>
+      <ng-container *ngIf="isCoolingCategory(productForm.category)">
+        <label>
+          Model number
+          <input type="text" name="modelNumber" [(ngModel)]="productForm.modelNumber" />
+        </label>
+        <label>
+          Capacity
+          <input type="text" name="capacity" [(ngModel)]="productForm.capacity" />
+        </label>
+      </ng-container>
       <div class="form-row">
         <label>
           Price
@@ -167,7 +184,7 @@
       <article
         class="product compact micro"
         *ngFor="let product of visibleProducts"
-        [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.conditionNote || 'New') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
+        [title]="getProductTitle(product)"
       >
         <div class="product-media" *ngIf="product.imageUrls?.length; else placeholder">
           <img class="thumb tiny" loading="lazy" [src]="thumbUrl(product.imageUrls?.[0])" [alt]="product.name" />
@@ -251,7 +268,7 @@
         </p>
       </div>
       <h4 class="name-line">{{ product.name }}</h4>
-      <p class="product-condition">{{ (product.conditionNote || 'New') | titlecase }}</p>
+      <p class="product-condition">{{ formatCondition(product.conditionNote) }}</p>
     </article>
   </div>
 

@@ -4,6 +4,8 @@ export interface Product {
   brand?: string;
   category?: string;
   conditionNote?: string;
+  modelNumber?: string;
+  capacity?: string;
   price?: number | null;
   currency?: string;
   status?: string;

@@ -28,13 +28,68 @@ export class AdminComponent implements OnInit, OnDestroy {
     name: '',
     brand: '',
     category: '',
-    conditionNote: 'New',
+    conditionNote: 'NEW',
+    modelNumber: '',
+    capacity: '',
     price: null,
     currency: 'GHS',
     status: 'AVAILABLE',
     description: '',
     imageUrls: []
   };
+  brandOptions = [
+    "Winia/Daewoo",
+    "Samsung",
+    "LG",
+    "Member's Mark",
+    "Sam's Club",
+    "Ashley",
+    "Mainstays",
+    "Frigidaire",
+    "Razor",
+    "Oral-B",
+    "Ozark Trail",
+    "Z-Line",
+    "Two Harbours",
+    "ZeroWater",
+    "Brita",
+    "Ionvac",
+    "Cookworks",
+    "SentrySafe",
+    "Cuisinart",
+    "Blackstone",
+    "Pitboss",
+    "FitRx",
+    "Arctic King",
+    "Hisense",
+    "Kraus",
+    "Yaheetech",
+    "Better Homes & Gardens"
+  ];
+  categoryOptions = [
+    'Refrigerators',
+    'Freezers',
+    'Furniture',
+    'Sofa',
+    'Tables',
+    'Beds',
+    'Chairs',
+    'Bathroom furniture',
+    'Kitchen furniture',
+    'Stoves',
+    'Grills',
+    'Tents',
+    'Canopies',
+    'Ovens',
+    'Mattresses',
+    'Basketball Hoops',
+    'Fitness dumbbells',
+    'Decoration',
+    'Kitchen appliances',
+    'TVs',
+    'Drones'
+  ];
+  conditionOptions = ['NEW', 'USED'];
   productStatuses = ['AVAILABLE', 'RESERVED', 'SOLD'];
   editingProductId: number | null = null;
   adminMessage = '';
@@ -298,6 +353,40 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.prefetchOtherViews(view);
   }
 
+  onCategoryChange(): void {
+    if (!this.isCoolingCategory(this.productForm.category)) {
+      this.productForm.modelNumber = '';
+      this.productForm.capacity = '';
+    }
+  }
+
+  isCoolingCategory(category?: string | null): boolean {
+    return ['Refrigerators', 'Freezers'].includes((category || '').trim());
+  }
+
+  formatCondition(value?: string | null): string {
+    const normalized = (value || '').trim().toUpperCase();
+    if (normalized === 'USED') return 'Used';
+    return 'New';
+  }
+
+  getProductTitle(product: Product): string {
+    const parts = [
+      product.name,
+      product.brand,
+      product.category,
+      this.formatCondition(product.conditionNote),
+      product.modelNumber,
+      product.capacity
+    ].filter(Boolean);
+    const price =
+      product.price != null
+        ? `${product.currency || 'GHS'} ${product.price}`
+        : '';
+    if (price) parts.push(price);
+    return parts.join(' • ');
+  }
+
   thumbUrl(url?: string): string {
     if (!url) return '';
     const marker = '/image/upload/';
@@ -361,7 +450,9 @@ export class AdminComponent implements OnInit, OnDestroy {
       name: product.name,
       brand: product.brand || '',
       category: product.category || '',
-      conditionNote: product.conditionNote || 'New',
+      conditionNote: product.conditionNote || 'NEW',
+      modelNumber: product.modelNumber || '',
+      capacity: product.capacity || '',
       price: product.price ?? null,
       currency: product.currency || 'GHS',
       status: product.status || 'AVAILABLE',
@@ -377,7 +468,9 @@ export class AdminComponent implements OnInit, OnDestroy {
       name: '',
       brand: '',
       category: '',
-      conditionNote: 'New',
+      conditionNote: 'NEW',
+      modelNumber: '',
+      capacity: '',
       price: null,
       currency: 'GHS',
       status: 'AVAILABLE',
@@ -397,6 +490,8 @@ export class AdminComponent implements OnInit, OnDestroy {
       brand: this.productForm.brand,
       category: this.productForm.category,
       conditionNote: this.productForm.conditionNote,
+      modelNumber: this.productForm.modelNumber,
+      capacity: this.productForm.capacity,
       price: this.productForm.price ?? undefined,
       currency: this.productForm.currency,
       status: this.productForm.status,

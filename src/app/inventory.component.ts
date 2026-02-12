@@ -147,4 +147,27 @@ export class InventoryComponent implements OnInit {
     }
     return url;
   }
+
+  formatCondition(value?: string | null): string {
+    const normalized = (value || '').trim().toUpperCase();
+    if (normalized === 'USED') return 'Used';
+    return 'New';
+  }
+
+  getProductTitle(product: Product): string {
+    const parts = [
+      product.name,
+      product.brand,
+      product.category,
+      this.formatCondition(product.conditionNote),
+      product.modelNumber,
+      product.capacity
+    ].filter(Boolean);
+    const price =
+      product.price != null
+        ? `${product.currency || 'GHS'} ${product.price}`
+        : '';
+    if (price) parts.push(price);
+    return parts.join(' • ');
+  }
 }
