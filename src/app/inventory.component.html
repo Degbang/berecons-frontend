@@ -56,7 +56,6 @@
         <option value="ALL">All</option>
         <option value="AVAILABLE">Available</option>
         <option value="RESERVED">Reserved</option>
-        <option value="SOLD">Sold</option>
       </select>
     </label>
     <label>
@@ -75,8 +74,10 @@
     <article
       class="product micro"
       *ngFor="let product of filteredProducts"
+      [class.reserved]="isReserved(product)"
       [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.conditionNote || 'New') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
     >
+      <div class="reserved-badge" *ngIf="isReserved(product)">Reserved</div>
       <div class="product-media" *ngIf="product.imageUrls?.length; else placeholder">
         <img class="thumb" loading="lazy" [src]="thumbUrl(product.imageUrls?.[0])" [alt]="product.name" />
         <button type="button" class="view-btn" (click)="openPreview(product.imageUrls?.[0])">👁</button>
@@ -89,9 +90,10 @@
       <div class="card-actions">
         <a
           class="icon-btn"
-          [class.disabled]="!whatsappConfigured"
-          [attr.aria-disabled]="!whatsappConfigured"
-          [href]="getWhatsAppLink(product)"
+          [class.disabled]="!whatsappConfigured || isReserved(product)"
+          [attr.aria-disabled]="!whatsappConfigured || isReserved(product)"
+          [attr.href]="!whatsappConfigured || isReserved(product) ? null : getWhatsAppLink(product)"
+          (click)="blockIfReserved($event, product)"
           target="_blank"
           rel="noopener"
           title="Chat on WhatsApp"
@@ -114,6 +116,9 @@
           class="icon-btn"
           routerLink="/booking"
           [queryParams]="{ productId: product.id, productName: product.name }"
+          [class.disabled]="isReserved(product)"
+          [attr.aria-disabled]="isReserved(product)"
+          (click)="blockIfReserved($event, product)"
           title="Book viewing"
           aria-label="Book viewing"
         >

@@ -52,14 +52,17 @@ export class InventoryComponent implements OnInit {
   get filteredProducts(): Product[] {
     const term = this.searchTerm.trim().toLowerCase();
     return this.products.filter((product) => {
+      const status = (product.status ?? 'AVAILABLE').toUpperCase();
+      if (status === 'SOLD') {
+        return false;
+      }
       const matchesTerm = term
         ? `${product.name} ${product.brand ?? ''} ${product.category ?? ''}`
             .toLowerCase()
             .includes(term)
         : true;
       const matchesStatus =
-        this.statusFilter === 'ALL' ||
-        (product.status ?? 'AVAILABLE').toUpperCase() === this.statusFilter;
+        this.statusFilter === 'ALL' || status === this.statusFilter;
       const matchesCategory =
         this.categoryFilter === 'ALL' || (product.category ?? '') === this.categoryFilter;
       return matchesTerm && matchesStatus && matchesCategory;
@@ -96,6 +99,18 @@ export class InventoryComponent implements OnInit {
     const phone = this.normalizePhone(this.whatsappNumber);
     const message = `Hi, I'm interested in ${product.name}. Is it available?`;
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  }
+
+  isReserved(product: Product): boolean {
+    return (product.status ?? '').toUpperCase() === 'RESERVED';
+  }
+
+  blockIfReserved(event: Event, product: Product): void {
+    if (this.isReserved(product)) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.toast.error('This item is reserved.');
+    }
   }
 
   private normalizePhone(value?: string): string {
