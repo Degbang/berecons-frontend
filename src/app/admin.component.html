@@ -163,10 +163,10 @@
     <div class="status error" *ngIf="productsError">{{ productsError }}</div>
     <div class="status" *ngIf="productsMessage">{{ productsMessage }}</div>
 
-    <div class="grid compact" *ngIf="!productsLoading && products.length">
+    <div class="grid compact" *ngIf="!productsLoading && visibleProducts.length">
       <article
         class="product compact micro"
-        *ngFor="let product of products"
+        *ngFor="let product of visibleProducts"
         [title]="product.name + ' • ' + (product.brand||'') + ' • ' + (product.category||'') + ' • ' + (product.conditionNote || 'New') + ' • ' + (product.price ? (product.currency||'GHS') + ' ' + product.price : '')"
       >
         <div class="product-media" *ngIf="product.imageUrls?.length; else placeholder">
@@ -255,7 +255,7 @@
     </article>
   </div>
 
-    <div class="status" *ngIf="!productsLoading && !products.length">
+    <div class="status" *ngIf="!productsLoading && !visibleProducts.length">
       No products yet. Add one above.
     </div>
   </section>

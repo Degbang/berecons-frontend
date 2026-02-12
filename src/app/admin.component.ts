@@ -47,6 +47,13 @@ export class AdminComponent implements OnInit, OnDestroy {
   cloudinaryUploadPreset = appSettings.cloudinaryUploadPreset;
 
   adminView: 'products' | 'bookings' | 'wishlists' = 'products';
+
+  get visibleProducts(): Product[] {
+    return this.products.filter(
+      (product) => (product.status ?? 'AVAILABLE').toUpperCase() !== 'SOLD'
+    );
+  }
+
   loginUsername = '';
   loginPassword = '';
   showLoginPassword = false;
