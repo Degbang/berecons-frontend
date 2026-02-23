@@ -15,10 +15,12 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render the brand', () => {
+  it('should render the brand logo', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.brand')?.textContent).toContain('@bereconstrading');
+    const logo = compiled.querySelector('.brand-logo');
+    expect(logo).toBeTruthy();
+    expect(logo?.getAttribute('src')).toContain('/branding/bereconstrading.png');
   });
 });

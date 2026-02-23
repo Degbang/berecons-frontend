@@ -1,8 +1,10 @@
 <div class="shell">
   <header class="topbar">
-    <div class="brand">Berecons Trading</div>
-    <nav class="nav">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inventory</a>
+    <a class="brand" routerLink="/" aria-label="Berecons Trading home">
+      <img class="brand-logo" src="/branding/bereconstrading.png" alt="Berecons Trading" />
+    </a>
+    <nav class="nav" *ngIf="auth.isLoggedIn() || !isInventoryRoute">
+      <a *ngIf="!isInventoryRoute" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inventory</a>
       <ng-container *ngIf="auth.isLoggedIn(); else customerLinks">
         <ng-container *ngIf="isAdminRoute; else adminGlobalLinks">
           <ng-container [ngSwitch]="adminView">
@@ -50,8 +52,8 @@
         </button>
       </ng-container>
       <ng-template #customerLinks>
-        <a routerLink="/wishlist" routerLinkActive="active">Wishlists</a>
-        <a routerLink="/booking" routerLinkActive="active">Bookings</a>
+        <a routerLink="/wishlist" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Wishlists</a>
+        <a routerLink="/booking" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Bookings</a>
       </ng-template>
     </nav>
   </header>

@@ -16,6 +16,7 @@ export class AppComponent {
   title = 'UNBEATABLE Imports';
 
   isAdminRoute = false;
+  isInventoryRoute = false;
   adminView: 'products' | 'wishlists' | 'bookings' = 'products';
 
   constructor(
@@ -37,6 +38,7 @@ export class AppComponent {
     const primary = tree.root.children['primary'];
     const seg0 = primary?.segments?.[0]?.path;
     const seg1 = primary?.segments?.[1]?.path;
+    this.isInventoryRoute = !seg0;
 
     this.isAdminRoute = seg0 === 'admin';
     if (!this.isAdminRoute) {
