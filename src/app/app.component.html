@@ -1,7 +1,7 @@
 <div class="shell">
   <header class="topbar" [class.topbar-solo]="!auth.isLoggedIn() && isInventoryRoute">
     <a class="brand" routerLink="/" aria-label="Berecons Trading home">
-      <img class="brand-logo" src="/branding/bereconstrading.png" alt="Berecons Trading" />
+      <img class="brand-logo" src="/branding/bereconstrading.png?v=20260223a" alt="Berecons Trading" />
     </a>
     <nav class="nav" *ngIf="auth.isLoggedIn() || !isInventoryRoute">
       <a *ngIf="!isInventoryRoute" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inventory</a>
