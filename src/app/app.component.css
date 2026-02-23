@@ -19,6 +19,10 @@
   border-bottom: 1px solid var(--line);
 }
 
+.topbar.topbar-solo {
+  justify-content: center;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -32,9 +36,10 @@
 
 .brand-logo {
   display: block;
-  height: 46px;
-  max-width: min(54vw, 320px);
+  height: clamp(44px, 5vw, 62px);
+  max-width: min(80vw, 520px);
   width: auto;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .brand:hover {
@@ -95,7 +100,7 @@
 
 @media (max-width: 640px) {
   .brand-logo {
-    height: 38px;
-    max-width: min(68vw, 260px);
+    height: 44px;
+    max-width: min(88vw, 360px);
   }
 }
