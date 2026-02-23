@@ -37,54 +37,11 @@
       <li>Book a viewing and test in person.</li>
     </ol>
     <div class="card-footer">We confirm everything by phone.</div>
-
-    <details class="story-toggle">
-      <summary class="story-toggle-btn">Click here for our story</summary>
-      <div class="story-grid">
-        <article class="story-card story-card-primary">
-          <p class="story-kicker">Our Story</p>
-          <h3>We built Berecons Trading to end the premium-goods monopoly mindset.</h3>
-          <p>
-            We created Berecons Trading, LLC with one rebellious goal: end the extortionate "luxury tax" on premium goods in Ghana.
-            We did not enter this market to build another boutique label. We entered to break a monopoly.
-          </p>
-          <p>
-            Our mission remains clear: authentic, mid-to-high-tier home appliances, furniture, and outdoor living essentials can be
-            sourced, imported, and sold without predatory mark-ups.
-          </p>
-          <div class="story-pillars">
-            <span>Authentic imports</span>
-            <span>Direct sourcing</span>
-            <span>No extortion pricing</span>
-          </div>
-        </article>
-        <article class="story-card">
-          <h3>From Project To Purpose</h3>
-          <p>
-            What began as a private project became a mission when we saw the demand for quality.
-            Listings for Kenmore ranges, SentrySafe, Blackstone grills, and Ozark Trail drew a strong response from buyers tired of
-            being overcharged for products not built to last. As of February 5, only 5 units remain from our first 35 large refrigerators.
-          </p>
-        </article>
-        <article class="story-card">
-          <h3>The Collection Evolves</h3>
-          <p>
-            From handcrafted Montana Woodworks pieces to refined CosmoLiving lines, we source products that reflect American and
-            European craftsmanship. We focus on these markets for engineering quality, safety, and durability.
-          </p>
-          <p class="story-tag">#TheBereconsQuality</p>
-        </article>
-        <article class="story-card">
-          <h3>Market Realities & Our Promise</h3>
-          <p>
-            We refuse extortion, but we also refuse shortcuts. "Cheap" often hides compromised quality or legal risk.
-            To keep every product authentic and legally imported, we maintain a non-negotiable floor price.
-            You pay for material quality and sourcing integrity, not hype.
-          </p>
-          <p class="story-tag">#TheBereconsPromise #TheBereconsPrice</p>
-        </article>
-      </div>
-    </details>
+    <div class="story-open">
+      <button type="button" class="story-open-btn" (click)="openStory()">
+        Read our full story
+      </button>
+    </div>
   </div>
 </section>
 
@@ -222,5 +179,45 @@
       <img [src]="previewUrl" alt="Preview image" />
       <button type="button" class="btn ghost" (click)="closePreview()">Close</button>
     </div>
+  </div>
+
+  <div class="story-modal-backdrop" *ngIf="storyOpen" (click)="closeStory()">
+    <article class="story-modal" role="dialog" aria-modal="true" aria-labelledby="story-title" (click)="$event.stopPropagation()">
+      <header class="story-modal-header">
+        <p class="story-modal-kicker">Our Story</p>
+        <h3 id="story-title">Berecons Trading, LLC</h3>
+        <button type="button" class="story-close-btn" (click)="closeStory()" aria-label="Close story">Close</button>
+      </header>
+
+      <div class="story-modal-content">
+        <section class="story-modal-section">
+          <h4>Our Mission</h4>
+          <p>
+            We created Berecons Trading, LLC for a single, rebellious goal: to end the extortionate "luxury tax" on premium goods in Ghana. We entered this market to break a monopoly, not to build another "boutique" brand. Our mission remains clear: to prove that authentic, mid-to-high-tier home appliances, furniture, and outdoor living essentials can be sourced, imported, and sold without the predatory mark-ups that have become the local standard.
+          </p>
+        </section>
+
+        <section class="story-modal-section">
+          <h4>From Project to Purpose</h4>
+          <p>
+            What began as a private project became a mission when we saw the hunger for quality. Listings for Kenmore Ranges, SentrySafe, Blackstone Grills, and Ozark Trail received an overwhelming response from a discerning audience tired of being overcharged. for products not built to last. We read thousands of your comments, leveraged our networks to become the direct conduit for those who refuse to settle. Only 5 units of our 35 large refrigerators remain in stock since February 5th.
+          </p>
+        </section>
+
+        <section class="story-modal-section">
+          <h4>The Evolution of Our Collection</h4>
+          <p>
+            Our calibre continues to grow. From handcrafted, heirloom masterpieces like Montana Woodworks to the refined lines of CosmoLiving, we source pieces that define American and European craftsmanship. We specialise in these markets for their superior engineering, safety, and durability. This is the essence of #TheBereconsQuality.
+          </p>
+        </section>
+
+        <section class="story-modal-section">
+          <h4>Market Realities & Our Promise</h4>
+          <p>
+            We once had the "foolish" ambition to force market prices down. But importing integrity is a battle; "cheap" often masks compromised quality or legal shortcuts. To deliver authentic goods through every legal channel, we maintain a non-negotiable floor price. We refuse to participate in extortion, but we will not compromise the honesty of the journey. This is #TheBereconsPromise. You are paying for material quality and sourcing integrity. We aren’t here to be the cheapest; we are here to be the most honest. That is #TheBereconsPrice.
+          </p>
+        </section>
+      </div>
+    </article>
   </div>
 </section>

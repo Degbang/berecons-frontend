@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from './api.service';
@@ -23,8 +23,10 @@ export class InventoryComponent implements OnInit {
   statusFilter = 'ALL';
   categoryFilter = 'ALL';
   previewUrl: string | null = null;
+  storyOpen = false;
 
   whatsappNumber = appSettings.whatsappNumber;
+  cloudinaryCloudName = appSettings.cloudinaryCloudName;
 
   constructor(
     private api: ApiService,
@@ -126,8 +128,9 @@ export class InventoryComponent implements OnInit {
   }
 
   openPreview(url?: string): void {
-    if (url) {
-      this.previewUrl = url;
+    const preview = this.resolveImageUrl(url);
+    if (preview) {
+      this.previewUrl = preview;
     }
   }
 
@@ -135,17 +138,56 @@ export class InventoryComponent implements OnInit {
     this.previewUrl = null;
   }
 
-  thumbUrl(url?: string): string {
-    if (!url) return '';
-    const marker = '/image/upload/';
-    const idx = url.indexOf(marker);
-    if (idx >= 0) {
-      const prefix = url.substring(0, idx + marker.length);
-      const rest = url.substring(idx + marker.length);
-      // Keep thumbnails crisp on modern (high-DPI) screens.
-      return `${prefix}f_auto,q_auto:best,dpr_auto,w_1000/${rest}`;
+  openStory(): void {
+    this.storyOpen = true;
+  }
+
+  closeStory(): void {
+    this.storyOpen = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.previewUrl) {
+      this.closePreview();
     }
-    return url;
+    if (this.storyOpen) {
+      this.closeStory();
+    }
+  }
+
+  thumbUrl(url?: string): string {
+    // Keep thumbnails crisp on modern (high-DPI) screens.
+    return this.resolveImageUrl(url, 'f_auto,q_auto:best,dpr_auto,w_1000');
+  }
+
+  resolveImageUrl(url?: string, transform?: string): string {
+    const value = (url || '').trim();
+    if (!value) return '';
+
+    if (this.isHttpUrl(value)) {
+      if (!transform) return value;
+      const marker = '/image/upload/';
+      const idx = value.indexOf(marker);
+      if (idx >= 0) {
+        const prefix = value.substring(0, idx + marker.length);
+        const rest = value.substring(idx + marker.length);
+        return `${prefix}${transform}/${rest}`;
+      }
+      return value;
+    }
+
+    if (!this.cloudinaryCloudName) {
+      return value;
+    }
+
+    const publicId = value.replace(/^\/+/, '');
+    const transformPart = transform ? `${transform}/` : '';
+    return `https://res.cloudinary.com/${this.cloudinaryCloudName}/image/upload/${transformPart}${publicId}`;
+  }
+
+  private isHttpUrl(value: string): boolean {
+    return value.startsWith('http://') || value.startsWith('https://');
   }
 
   formatCondition(value?: string | null): string {
