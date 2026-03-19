@@ -363,3 +363,68 @@
   max-height: 70vh;
   object-fit: contain;
 }
+
+.upload-flow {
+  display: grid;
+  gap: 14px;
+}
+
+.flow-steps {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.step-pill {
+  border: 1px solid #e2c4bf;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  color: #7d2d24;
+  background: #fff6f4;
+}
+
+.step-pill.active {
+  border-color: #b64536;
+  background: #b6453618;
+  font-weight: 600;
+}
+
+.flow-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.upload-review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 220px));
+  justify-content: start;
+  gap: 10px;
+}
+
+.upload-review-card {
+  border: 1px solid #f0e2e0;
+  border-radius: 14px;
+  background: #fff;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.upload-review-card.invalid {
+  border-color: #b64536;
+  box-shadow: 0 0 0 1px #b6453626;
+}
+
+.upload-review-card label {
+  font-size: 0.86rem;
+  color: #543631;
+  display: grid;
+  gap: 6px;
+}
+
+.upload-review-card input,
+.upload-review-card select {
+  width: 100%;
+  box-sizing: border-box;
+}

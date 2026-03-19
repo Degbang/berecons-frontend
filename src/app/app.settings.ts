@@ -4,7 +4,18 @@ const runtimeWindow =
     : (window as typeof window & { __APP_API_BASE__?: string });
 
 const runtimeHost = runtimeWindow?.location.hostname ?? '';
-const isLocalHost = runtimeHost === 'localhost' || runtimeHost === '127.0.0.1';
+const runtimePort = runtimeWindow?.location.port ?? '';
+const isLocalHost =
+  runtimeHost === 'localhost' ||
+  runtimeHost === '127.0.0.1' ||
+  runtimeHost === '0.0.0.0' ||
+  runtimeHost === '' || // file:// or missing hostname
+  runtimeHost.endsWith('.local') ||
+  runtimeHost.startsWith('192.168.') ||
+  runtimeHost.startsWith('10.') ||
+  runtimeHost.startsWith('172.') ||
+  runtimePort === '4200'; // typical Angular dev server port
+
 const fallbackApiBase = runtimeWindow
   ? isLocalHost
     ? 'http://localhost:8080/api'

@@ -3,12 +3,26 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
-import { Subscription, filter } from 'rxjs';
+import { Subscription, filter, firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ApiService } from './api.service';
 import { appSettings } from './app.settings';
 import { Product } from './models';
 import { ToastService } from './toast.service';
+
+type UploadDraft = {
+  id: string;
+  imageRef: string;
+  fileName: string;
+  name: string;
+  category: string;
+  price: number | null;
+};
+
+type IndexedUploadDraft = {
+  index: number;
+  draft: UploadDraft;
+};
 
 @Component({
   selector: 'app-admin',
@@ -97,6 +111,11 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   imageUploading = false;
   imageUploadMessage = '';
+  uploadFlowStep: 1 | 2 | 3 = 1;
+  uploadFlowMessage = '';
+  publishingBatch = false;
+  uploadDrafts: UploadDraft[] = [];
+  uploadConcurrency = 4;
 
   cloudinaryCloudName = appSettings.cloudinaryCloudName;
   cloudinaryUploadPreset = appSettings.cloudinaryUploadPreset;
@@ -322,8 +341,9 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   openPreview(url?: string): void {
-    if (url) {
-      this.previewUrl = url;
+    const preview = this.resolveImageUrl(url);
+    if (preview) {
+      this.previewUrl = preview;
     }
   }
 
@@ -388,15 +408,36 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   thumbUrl(url?: string): string {
-    if (!url) return '';
-    const marker = '/image/upload/';
-    const idx = url.indexOf(marker);
-    if (idx >= 0) {
-      const prefix = url.substring(0, idx + marker.length);
-      const rest = url.substring(idx + marker.length);
-      return `${prefix}f_auto,q_auto:good,dpr_auto,w_620/${rest}`;
+    return this.resolveImageUrl(url, 'f_auto,q_auto:good,dpr_auto,w_620');
+  }
+
+  resolveImageUrl(url?: string, transform?: string): string {
+    const value = (url || '').trim();
+    if (!value) return '';
+
+    if (this.isHttpUrl(value)) {
+      if (!transform) return value;
+      const marker = '/image/upload/';
+      const idx = value.indexOf(marker);
+      if (idx >= 0) {
+        const prefix = value.substring(0, idx + marker.length);
+        const rest = value.substring(idx + marker.length);
+        return `${prefix}${transform}/${rest}`;
+      }
+      return value;
     }
-    return url;
+
+    if (!this.cloudinaryCloudName) {
+      return value;
+    }
+
+    const publicId = value.replace(/^\/+/, '');
+    const transformPart = transform ? `${transform}/` : '';
+    return `https://res.cloudinary.com/${this.cloudinaryCloudName}/image/upload/${transformPart}${publicId}`;
+  }
+
+  private isHttpUrl(value: string): boolean {
+    return value.startsWith('http://') || value.startsWith('https://');
   }
 
   private normalizePhone(value?: string): string {
@@ -549,33 +590,263 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.imageUploading = true;
     this.imageUploadMessage = 'Uploading...';
 
-    // Upload the original file to preserve quality.
-    formData.append('file', file);
-    formData.append('upload_preset', this.cloudinaryUploadPreset);
-
-    this.http
-      .post<{ secure_url: string }>(
-        `https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`,
-        formData
-      )
-      .subscribe({
-        next: (result) => {
-          this.productForm.imageUrls = [...(this.productForm.imageUrls || []), result.secure_url];
-          this.imageUploading = false;
-          this.imageUploadMessage = 'Image uploaded.';
-          this.toast.success('Image uploaded.');
-          input.value = '';
-        },
-        error: () => {
-          this.imageUploading = false;
-          this.imageUploadMessage = 'Upload failed.';
-          this.toast.error(this.imageUploadMessage);
-        }
+    this.uploadToCloudinary(file)
+      .then((result) => {
+        const imageRef = result.public_id?.trim() || result.secure_url;
+        this.productForm.imageUrls = [...(this.productForm.imageUrls || []), imageRef];
+        this.imageUploading = false;
+        this.imageUploadMessage = 'Image uploaded.';
+        this.toast.success('Image uploaded.');
+        input.value = '';
+      })
+      .catch((error) => {
+        this.imageUploading = false;
+        this.imageUploadMessage = this.getCloudinaryErrorMessage(error);
+        this.toast.error(this.imageUploadMessage);
+        input.value = '';
       });
   }
 
   removeImage(index: number): void {
     if (!this.productForm.imageUrls) return;
     this.productForm.imageUrls = this.productForm.imageUrls.filter((_, i) => i !== index);
+  }
+
+  goToCategorizeStep(): void {
+    if (!this.uploadDrafts.length) return;
+    this.uploadFlowStep = 2;
+    this.uploadFlowMessage = '';
+  }
+
+  goToUploadStep(): void {
+    this.uploadFlowStep = 1;
+    this.uploadFlowMessage = '';
+  }
+
+  goToFinishStep(): void {
+    if (!this.uploadDrafts.length) {
+      this.uploadFlowMessage = 'Upload at least one picture first.';
+      return;
+    }
+
+    const missing = this.getMissingUploadDrafts();
+    if (missing.length) {
+      this.uploadFlowMessage = `Complete name and category for ${missing.length} item(s) before continuing.`;
+      return;
+    }
+
+    this.uploadFlowMessage = '';
+    this.uploadFlowStep = 3;
+  }
+
+  removeUploadDraft(id: string): void {
+    this.uploadDrafts = this.uploadDrafts.filter((draft) => draft.id !== id);
+    if (!this.uploadDrafts.length) {
+      this.uploadFlowStep = 1;
+    }
+  }
+
+  resetUploadFlow(): void {
+    this.uploadDrafts = [];
+    this.uploadFlowStep = 1;
+    this.uploadFlowMessage = '';
+    this.publishingBatch = false;
+  }
+
+  canPublishUploadFlow(): boolean {
+    return (
+      this.uploadDrafts.length > 0 &&
+      this.uploadDrafts.every((draft) => draft.name.trim() && draft.category.trim())
+    );
+  }
+
+  canProceedToFinish(): boolean {
+    return this.uploadDrafts.length > 0 && this.getMissingUploadDrafts().length === 0;
+  }
+
+  isUploadDraftInvalid(draft: UploadDraft): boolean {
+    return !draft.name?.trim() || !draft.category?.trim();
+  }
+
+  async uploadFlowFiles(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    if (!files.length) return;
+
+    if (!this.cloudinaryCloudName || !this.cloudinaryUploadPreset) {
+      this.uploadFlowMessage = 'Set Cloudinary cloud name and upload preset in app.settings.ts.';
+      input.value = '';
+      return;
+    }
+
+    this.imageUploading = true;
+    this.uploadFlowMessage = `Uploading 0/${files.length}...`;
+
+    const addedDrafts = await this.uploadFilesInParallel(files);
+    this.imageUploading = false;
+    if (!addedDrafts.length) {
+      this.uploadFlowMessage = 'No pictures were uploaded.';
+      this.toast.error(this.uploadFlowMessage);
+      input.value = '';
+      return;
+    }
+
+    this.uploadDrafts = [...this.uploadDrafts, ...addedDrafts];
+    this.uploadFlowMessage = `${addedDrafts.length} picture(s) uploaded.`;
+    this.toast.success(this.uploadFlowMessage);
+    this.goToCategorizeStep();
+    input.value = '';
+  }
+
+  async publishUploadFlow(): Promise<void> {
+    if (!this.canPublishUploadFlow()) {
+      this.uploadFlowMessage = 'Every picture must have a name and category.';
+      return;
+    }
+
+    this.publishingBatch = true;
+    this.adminMessage = '';
+    this.uploadFlowMessage = 'Publishing products...';
+
+    let successCount = 0;
+    for (let i = 0; i < this.uploadDrafts.length; i += 1) {
+      const draft = this.uploadDrafts[i];
+      const payload: Product = {
+        name: draft.name.trim(),
+        brand: this.productForm.brand,
+        category: draft.category.trim(),
+        conditionNote: this.productForm.conditionNote || 'NEW',
+        modelNumber: this.productForm.modelNumber,
+        capacity: this.productForm.capacity,
+        price: draft.price ?? undefined,
+        currency: this.productForm.currency || 'GHS',
+        status: this.productForm.status || 'AVAILABLE',
+        description: this.productForm.description,
+        imageUrls: [draft.imageRef]
+      };
+
+      try {
+        await firstValueFrom(this.api.createProduct(payload));
+        successCount += 1;
+        this.uploadFlowMessage = `Publishing ${i + 1}/${this.uploadDrafts.length}...`;
+      } catch {
+        this.publishingBatch = false;
+        this.uploadFlowMessage = `Failed while publishing "${draft.name}".`;
+        this.toast.error(this.uploadFlowMessage);
+        return;
+      }
+    }
+
+    this.publishingBatch = false;
+    this.adminMessage = `${successCount} product(s) published.`;
+    this.toast.success(this.adminMessage);
+    this.resetUploadFlow();
+    this.loadProducts();
+  }
+
+  private toDraftName(fileName: string): string {
+    const withoutExtension = fileName.replace(/\.[^/.]+$/, '');
+    return withoutExtension
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private getMissingUploadDrafts(): UploadDraft[] {
+    return this.uploadDrafts.filter((draft) => !draft.name?.trim() || !draft.category?.trim());
+  }
+
+  private async uploadFilesInParallel(files: File[]): Promise<UploadDraft[]> {
+    const uploaded: IndexedUploadDraft[] = [];
+    const failed: string[] = [];
+    let next = 0;
+    let completed = 0;
+    const total = files.length;
+    const workerCount = Math.min(this.uploadConcurrency, total);
+
+    const worker = async () => {
+      while (next < total) {
+        const index = next;
+        next += 1;
+        const file = files[index];
+        try {
+          const draft = await this.uploadSingleFileDraft(file, index);
+          uploaded.push({ index, draft });
+        } catch {
+          failed.push(file.name);
+        } finally {
+          completed += 1;
+          this.uploadFlowMessage = `Uploading ${completed}/${total}...`;
+        }
+      }
+    };
+
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+    if (failed.length) {
+      this.toast.error(`Failed to upload ${failed.length} file(s).`);
+      const failedPreview = failed.slice(0, 3).join(', ');
+      this.uploadFlowMessage = failed.length > 3
+        ? `Uploaded ${uploaded.length}/${total}. Failed: ${failedPreview}...`
+        : `Uploaded ${uploaded.length}/${total}. Failed: ${failedPreview}`;
+    }
+
+    return uploaded
+      .sort((a, b) => a.index - b.index)
+      .map((entry) => entry.draft);
+  }
+
+  private async uploadSingleFileDraft(file: File, index: number): Promise<UploadDraft> {
+    const result = await this.uploadToCloudinary(file);
+
+    const imageRef = result.public_id?.trim() || result.secure_url;
+    const defaultName = this.toDraftName(file.name);
+    return {
+      id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
+      imageRef,
+      fileName: file.name,
+      name: defaultName,
+      category: this.productForm.category || '',
+      price: this.productForm.price ?? null
+    };
+  }
+
+  private async uploadToCloudinary(file: File): Promise<{ secure_url: string; public_id?: string }> {
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`;
+
+    // Attempt 1: minimal unsigned payload (most compatible with unsigned presets).
+    const minimal = new FormData();
+    minimal.append('file', file);
+    minimal.append('upload_preset', this.cloudinaryUploadPreset);
+    try {
+      return await firstValueFrom(
+        this.http.post<{ secure_url: string; public_id?: string }>(uploadUrl, minimal)
+      );
+    } catch (firstError) {
+      // Attempt 2: optional folder hint if preset allows it.
+      const withFolder = new FormData();
+      withFolder.append('file', file);
+      withFolder.append('upload_preset', this.cloudinaryUploadPreset);
+      withFolder.append('folder', 'berecons/products');
+      try {
+        return await firstValueFrom(
+          this.http.post<{ secure_url: string; public_id?: string }>(uploadUrl, withFolder)
+        );
+      } catch {
+        throw firstError;
+      }
+    }
+  }
+
+  private getCloudinaryErrorMessage(error: any): string {
+    const cloudinaryMessage = error?.error?.error?.message;
+    if (typeof cloudinaryMessage === 'string' && cloudinaryMessage.trim()) {
+      return `Upload failed: ${cloudinaryMessage}`;
+    }
+    const fallback = error?.message;
+    if (typeof fallback === 'string' && fallback.trim()) {
+      return `Upload failed: ${fallback}`;
+    }
+    return 'Upload failed. Check Cloudinary preset settings.';
   }
 }

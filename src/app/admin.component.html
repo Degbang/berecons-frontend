@@ -86,86 +86,93 @@
     </div>
   </section>
 
-  <section class="section split" *ngIf="adminView==='products'">
-    <div class="spacer"></div>
-    <div class="form-wrapper">
-      <form class="panel form" (ngSubmit)="saveProduct()" #productFormRef="ngForm">
-        <label>
-          Product name
-          <input type="text" name="name" [(ngModel)]="productForm.name" required />
-        </label>
-      <label>
-        Brand
-        <select name="brand" [(ngModel)]="productForm.brand">
-          <option value="">Select brand</option>
-          <option *ngFor="let brand of brandOptions" [value]="brand">{{ brand }}</option>
-        </select>
-      </label>
-      <label>
-        Category
-        <select name="category" [(ngModel)]="productForm.category" (ngModelChange)="onCategoryChange()">
-          <option value="">Select category</option>
-          <option *ngFor="let category of categoryOptions" [value]="category">{{ category }}</option>
-        </select>
-      </label>
-      <label>
-        Condition
-        <select name="conditionNote" [(ngModel)]="productForm.conditionNote">
-          <option *ngFor="let condition of conditionOptions" [value]="condition">
-            {{ formatCondition(condition) }}
-          </option>
-        </select>
-      </label>
-      <ng-container *ngIf="isCoolingCategory(productForm.category)">
-        <label>
-          Model number
-          <input type="text" name="modelNumber" [(ngModel)]="productForm.modelNumber" />
-        </label>
-        <label>
-          Capacity
-          <input type="text" name="capacity" [(ngModel)]="productForm.capacity" />
-        </label>
-      </ng-container>
-      <div class="form-row">
-        <label>
-          Price
-          <input type="number" name="price" [(ngModel)]="productForm.price" />
-        </label>
-        <label>
-          Status
-          <select name="status" [(ngModel)]="productForm.status">
-            <option *ngFor="let status of productStatuses" [value]="status">{{ status }}</option>
-          </select>
-        </label>
+  <section class="section panel upload-flow" *ngIf="adminView==='products'">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">QUICK FLOW</p>
+        <h2>Upload → Categorize → Finish</h2>
+        <p class="lead">
+          Upload multiple pictures, choose category under each picture, then publish all at once.
+        </p>
       </div>
-      <label>
-        Description
-        <textarea name="description" rows="4" [(ngModel)]="productForm.description"></textarea>
-      </label>
+    </div>
 
-      <div class="upload-block">
-        <label class="file-input">
-          Upload image
-          <input type="file" accept="image/*" (change)="uploadImage($event)" />
-        </label>
-        <p class="status" *ngIf="imageUploading">Uploading image...</p>
-        <p class="status" *ngIf="imageUploadMessage">{{ imageUploadMessage }}</p>
-        <div class="image-grid" *ngIf="productForm.imageUrls?.length">
-          <div class="image-thumb" *ngFor="let url of productForm.imageUrls; let i = index">
-            <img [src]="url" alt="Product" />
-            <button class="chip" type="button" (click)="removeImage(i)">Remove</button>
+    <div class="flow-steps">
+      <span class="step-pill" [class.active]="uploadFlowStep === 1">1. Upload</span>
+      <span class="step-pill" [class.active]="uploadFlowStep === 2">2. Categorize</span>
+      <span class="step-pill" [class.active]="uploadFlowStep === 3">3. Finish</span>
+    </div>
+
+    <div *ngIf="uploadFlowStep === 1" class="flow-panel">
+      <label class="file-input">
+        Upload pictures
+        <input type="file" accept="image/*" multiple (change)="uploadFlowFiles($event)" />
+      </label>
+      <p class="status" *ngIf="imageUploading">Uploading images...</p>
+      <p class="status" *ngIf="uploadFlowMessage">{{ uploadFlowMessage }}</p>
+      <p class="status" *ngIf="uploadDrafts.length">
+        {{ uploadDrafts.length }} image(s) queued for categorization.
+      </p>
+      <div class="form-actions">
+        <button class="btn primary" type="button" [disabled]="!uploadDrafts.length || imageUploading" (click)="goToCategorizeStep()">
+          Next
+        </button>
+        <button class="btn ghost" type="button" [disabled]="!uploadDrafts.length" (click)="resetUploadFlow()">
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="uploadFlowStep === 2" class="flow-panel">
+      <p class="status" *ngIf="uploadFlowMessage">{{ uploadFlowMessage }}</p>
+      <div class="upload-review-grid" *ngIf="uploadDrafts.length; else noUploadsYet">
+        <article class="upload-review-card" *ngFor="let draft of uploadDrafts" [class.invalid]="isUploadDraftInvalid(draft)">
+          <div class="product-media">
+            <img class="thumb" [src]="thumbUrl(draft.imageRef)" [alt]="draft.name || 'Uploaded item'" />
+            <button type="button" class="view-btn" (click)="openPreview(draft.imageRef)">👁</button>
           </div>
-        </div>
+          <label>
+            Product name
+            <input type="text" [(ngModel)]="draft.name" />
+          </label>
+          <label>
+            Category
+            <select [(ngModel)]="draft.category">
+              <option value="">Select category</option>
+              <option *ngFor="let category of categoryOptions" [value]="category">{{ category }}</option>
+            </select>
+          </label>
+          <label>
+            Price (optional)
+            <input type="number" [(ngModel)]="draft.price" />
+          </label>
+          <p class="status error" *ngIf="isUploadDraftInvalid(draft)">
+            Add product name and category to continue.
+          </p>
+          <button class="chip" type="button" (click)="removeUploadDraft(draft.id)">Remove</button>
+        </article>
       </div>
+      <ng-template #noUploadsYet>
+        <p class="status">No uploads yet. Go back and add pictures first.</p>
+      </ng-template>
 
-        <div class="form-actions">
-          <button class="btn primary" type="submit" [disabled]="adminSubmitting || productFormRef.invalid">
-            {{ adminSubmitting ? 'Saving...' : (editingProductId ? 'Update Product' : 'Create Product') }}
-          </button>
-          <button class="btn ghost" type="button" (click)="resetProductForm()">Clear</button>
-        </div>
-        <p class="status" *ngIf="adminMessage">{{ adminMessage }}</p>
-      </form>
+      <div class="form-actions">
+        <button class="btn ghost" type="button" (click)="goToUploadStep()">Back</button>
+        <button class="btn primary" type="button" [disabled]="!canProceedToFinish()" (click)="goToFinishStep()">Next</button>
+      </div>
+    </div>
+
+    <div *ngIf="uploadFlowStep === 3" class="flow-panel">
+      <p class="status" *ngIf="uploadFlowMessage">{{ uploadFlowMessage }}</p>
+      <p class="lead">
+        Ready to publish {{ uploadDrafts.length }} product(s). Items without category or name cannot be published.
+      </p>
+      <div class="form-actions">
+        <button class="btn ghost" type="button" (click)="uploadFlowStep = 2">Back</button>
+        <button class="btn primary" type="button" [disabled]="publishingBatch || !canPublishUploadFlow()" (click)="publishUploadFlow()">
+          {{ publishingBatch ? 'Publishing...' : 'Finish & Publish' }}
+        </button>
+      </div>
     </div>
   </section>
 
